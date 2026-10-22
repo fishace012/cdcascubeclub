@@ -1,0 +1,196 @@
+/* =====================================================
+   成都文理学院魔方社官网 - 样式表（第二版）
+   说明：
+   - 字体使用系统字体栈，移除了第一版的 Google Fonts 外链，
+     避免境内访问时加载缓慢或失败。
+   - 新增：真实 3D 魔方样式、资源标签、社徽展示、招新海报区。
+   ===================================================== */
+
+:root {
+  --ink: #18251f;
+  --muted: #66746d;
+  --green: #d9fa68;
+  --green-dark: #a6d52f;
+  --paper: #f7f8f2;
+  --line: #dfe5d9;
+  --dark: #17241e;
+  /* 魔方小方块边长，由 js/cube.js 根据容器宽度动态设置 */
+  --cs: 56px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 84px; }
+body { margin: 0; color: var(--ink); background: var(--paper); font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Source Han Sans SC", sans-serif; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; }
+.mono { font-family: "DM Mono", Consolas, monospace; }
+
+/* ---------- 页眉 ---------- */
+.site-header { height: 82px; padding: 0 clamp(20px, 6vw, 92px); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); background: rgba(247,248,242,.94); position: sticky; top: 0; z-index: 20; backdrop-filter: blur(14px); }
+.brand { display: flex; align-items: center; gap: 12px; }
+/* 校徽 / 社徽图片：object-fit: contain 保证不拉伸、不裁切 */
+.brand-logo { width: 46px; height: 46px; object-fit: contain; display: block; flex: none; }
+.club-badge { border-radius: 50%; background: #fff; border: 1px solid var(--line); }
+.brand-text { display: flex; flex-direction: column; gap: 3px; }
+.brand-text strong { font-size: 16px; letter-spacing: .04em; }
+.brand-text span, .footer-brand span { font: 10px "DM Mono", Consolas, monospace; letter-spacing: .12em; color: var(--muted); }
+.main-nav { display: flex; align-items: center; gap: clamp(20px, 3vw, 44px); height: 100%; }
+.nav-link { height: 100%; display: flex; align-items: center; position: relative; color: #5c6b61; font-size: 13px; transition: color .2s; }
+.nav-link:hover, .nav-link.active { color: var(--ink); }
+.nav-link.active::after { content: ""; height: 3px; background: var(--green-dark); position: absolute; left: 0; right: 0; bottom: 0; }
+.menu-toggle { display: none; border: 0; background: none; font-size: 25px; }
+.section-wrap { width: min(1180px, calc(100% - 48px)); margin: 0 auto; }
+
+/* ---------- 首页主视觉 ---------- */
+.hero { min-height: 610px; padding-top: 86px; display: grid; grid-template-columns: 1.04fr .96fr; align-items: center; position: relative; }
+.hero-copy { padding-bottom: 50px; position: relative; z-index: 2; }
+.eyebrow, .section-kicker { font: 11px "DM Mono", Consolas, monospace; letter-spacing: .13em; color: #68776b; }
+.eyebrow { display: flex; align-items: center; gap: 9px; }
+.eyebrow-dot, .live-dot { display: inline-block; width: 7px; height: 7px; background: #9acb2e; border-radius: 50%; }
+h1 { margin: 27px 0 20px; font-size: clamp(44px, 5.2vw, 72px); line-height: 1.15; letter-spacing: -.055em; font-weight: 900; }
+h1 span { color: #769d23; }
+.hero-desc { max-width: 480px; color: var(--muted); line-height: 1.95; font-size: 15px; }
+.hero-actions { display: flex; gap: 12px; margin-top: 30px; flex-wrap: wrap; }
+.button { min-height: 48px; padding: 0 21px; display: inline-flex; align-items: center; justify-content: center; gap: 26px; font-size: 13px; font-weight: 700; border-radius: 5px; transition: transform .2s, box-shadow .2s; }
+.button:hover { transform: translateY(-2px); }
+.button-primary { background: var(--green); box-shadow: 4px 4px 0 #c6d9a2; }
+.button-ghost { border: 1px solid #cbd4c8; background: transparent; }
+.hero-note { display: flex; align-items: center; gap: 12px; margin-top: 42px; font-size: 12px; color: #78847a; }
+.tiny-cube { display: grid; grid-template-columns: repeat(3, 5px); gap: 2px; transform: rotate(-10deg); }
+.tiny-cube i { width: 5px; height: 5px; border-radius: 1px; background: #7da12b; }
+.tiny-cube i:nth-child(2n) { background: #f1bb4b; }.tiny-cube i:nth-child(3n) { background: #e87960; }
+
+/* 首页右侧：3D 魔方舞台 */
+.hero-art { min-height: 420px; position: relative; display: grid; place-items: center; overflow: hidden; }
+.orbit { position: absolute; border: 1px solid #dfe6d7; border-radius: 50%; transform: rotate(-28deg); }
+.orbit-one { width: 430px; height: 250px; }.orbit-two { width: 510px; height: 340px; transform: rotate(33deg); }
+/* 魔方下方的椭圆软阴影（独立元素，避免 filter 破坏 3D） */
+.cube-shadow { position: absolute; bottom: 14%; left: 50%; width: 55%; height: 26px; transform: translateX(-50%); background: radial-gradient(ellipse at center, rgba(26,45,24,.16), transparent 68%); border-radius: 50%; pointer-events: none; }
+
+/* 3D 魔方：scene 提供透视，stage 负责整体旋转，cubie 是 27 个小方块 */
+.cube-scene { position: relative; width: min(310px, 82%); aspect-ratio: 1 / 1; perspective: 950px; touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; }
+.cube-scene:active { cursor: grabbing; }
+.cube-stage { position: absolute; inset: 0; transform-style: preserve-3d; }
+/* 单个小方块：绝对定位在舞台中心，位移与姿态由 JS 的 matrix3d 控制 */
+.cubie { position: absolute; left: 50%; top: 50%; width: var(--cs); height: var(--cs); margin-left: calc(var(--cs) / -2); margin-top: calc(var(--cs) / -2); transform-style: preserve-3d; }
+/* 小方块的六个面：塑料黑底 + 贴纸（::after） */
+.cubie i { position: absolute; inset: 0; border-radius: 12%; background: #141d17; backface-visibility: hidden; }
+.cubie i::after { content: ""; position: absolute; inset: 5.5%; border-radius: 14%; background: #202b24; }
+/* 六个面的朝向：先旋转到位，再沿自身法线平移半个边长 */
+.cubie .f-f { transform: translateZ(calc(var(--cs) / 2)); }
+.cubie .f-b { transform: rotateY(180deg) translateZ(calc(var(--cs) / 2)); }
+.cubie .f-r { transform: rotateY(90deg) translateZ(calc(var(--cs) / 2)); }
+.cubie .f-l { transform: rotateY(-90deg) translateZ(calc(var(--cs) / 2)); }
+.cubie .f-u { transform: rotateX(90deg) translateZ(calc(var(--cs) / 2)); }
+.cubie .f-d { transform: rotateX(-90deg) translateZ(calc(var(--cs) / 2)); }
+/* 处于外表面的面才贴彩色贴纸（标准配色：上白下黄前绿后蓝右红左橙） */
+.cubie .out.f-r::after { background: #d24338; }
+.cubie .out.f-l::after { background: #ef8b2d; }
+.cubie .out.f-u::after { background: #f2f3ec; }
+.cubie .out.f-d::after { background: #f0c53c; }
+.cubie .out.f-f::after { background: #3ba552; }
+.cubie .out.f-b::after { background: #2f6fd0; }
+
+.floating-tag { position: absolute; z-index: 5; padding: 9px 12px; background: #fff; border: 1px solid #e2e7dc; border-radius: 4px; box-shadow: 0 8px 24px #24331c0c; font: 10px "DM Mono", Consolas, monospace; letter-spacing: .1em; }
+.tag-one { top: 62px; left: 4%; transform: rotate(-8deg); }.tag-two { right: 1%; bottom: 75px; transform: rotate(5deg); background: var(--green); }
+.art-caption { position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%); font: 10px "DM Mono", Consolas, monospace; letter-spacing: .22em; color: #98a391; white-space: nowrap; }
+.hero-bottom { position: absolute; bottom: 20px; left: 0; right: 0; display: flex; align-items: center; gap: 15px; font-size: 10px; letter-spacing: .08em; color: #889388; }
+.bottom-line { height: 1px; background: #dce3d6; flex: 1; }
+
+/* ---------- 社团特色三栏 ---------- */
+.quick-stats { display: grid; grid-template-columns: repeat(3,1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 28px 0; }
+.quick-stats > div { display: grid; grid-template-columns: 52px 1fr; column-gap: 12px; align-items: center; padding: 0 28px; border-right: 1px solid var(--line); }
+.quick-stats > div:first-child { padding-left: 8px; }.quick-stats > div:last-child { border: 0; }
+.quick-stats strong { grid-row: span 2; color: #8aa54e; font: 24px "DM Mono", Consolas, monospace; }
+.quick-stats span { font-weight: 700; font-size: 14px; }.quick-stats small { margin-top: 4px; font-size: 11px; color: #879187; }
+
+/* ---------- 教程资源区 ---------- */
+.content-section { padding-top: 100px; padding-bottom: 100px; }
+.section-heading { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 34px; }
+.section-heading h2, .about-copy h2 { font-size: clamp(28px, 3vw, 38px); letter-spacing: -.04em; margin: 12px 0 0; }
+.section-heading > p { max-width: 360px; margin: 0 0 4px; color: var(--muted); font-size: 13px; line-height: 1.8; }
+.learning-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 17px; }
+.learning-card { position: relative; min-height: 280px; overflow: hidden; padding: 25px 24px; border: 1px solid #e1e7dc; border-radius: 7px; background: #fff; transition: transform .25s, box-shadow .25s; }
+.learning-card:hover { transform: translateY(-5px); box-shadow: 0 16px 35px #25381c0d; }
+.featured-card { background: #e8f4ce; border-color: #dcebbd; }
+.card-topline { display: flex; justify-content: space-between; align-items: center; }
+.card-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: #eff3e8; font-size: 18px; }
+.featured-card .card-icon { background: #d6ebae; }
+.card-number { font: 9px "DM Mono", Consolas, monospace; letter-spacing: .1em; color: #889584; }
+.learning-card h3 { margin: 29px 0 11px; font-size: 20px; }
+.learning-card p { max-width: 265px; color: var(--muted); font-size: 12px; line-height: 1.9; }
+.text-link { position: absolute; bottom: 24px; left: 24px; display: flex; align-items: center; gap: 15px; font-size: 12px; font-weight: 700; }
+.text-link span { font-size: 17px; }.text-link:hover { color: #739a22; }
+.card-decoration { position: absolute; right: -25px; bottom: 20px; width: 100px; height: 100px; opacity: .45; pointer-events: none; }
+.decoration-cube { border: 10px solid #c0dd8d; transform: rotate(30deg); border-radius: 12px; box-shadow: inset 0 0 0 10px #e8f4ce, inset 0 0 0 20px #c0dd8d; }
+.decoration-lines { border: 1px solid #d7e2d1; border-radius: 50%; box-shadow: 0 0 0 12px #fff, 0 0 0 13px #d7e2d1, 0 0 0 26px #fff, 0 0 0 27px #d7e2d1; }
+.decoration-dots { background: radial-gradient(#c7d6be 2px, transparent 2.5px); background-size: 13px 13px; }
+/* 更多资源标签：按“工具 / 成绩 / 赛事 / 规则 / 视频”分类 */
+.resource-chips { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 20px; }
+.resource-chips a { display: inline-flex; align-items: center; gap: 7px; padding: 9px 13px; border: 1px solid #dce4d6; border-radius: 4px; background: #fff; font-size: 12px; color: #4d5b50; transition: border-color .2s, color .2s, transform .2s; }
+.resource-chips a:hover { border-color: #a9c67c; color: #5c7d1f; transform: translateY(-2px); }
+.resource-chips b { font-size: 10px; font-weight: 700; color: #fff; background: #8aa54e; border-radius: 3px; padding: 2px 6px; letter-spacing: .06em; }
+.resource-note { margin: 18px 0 0; font-size: 11px; color: #8a9588; }
+
+/* ---------- 计时器区 ---------- */
+.timer-section { background: var(--dark); color: #f4f7ed; padding: 88px 0; overflow: hidden; }
+.timer-layout { display: grid; grid-template-columns: .78fr 1.22fr; gap: 46px; align-items: center; }
+.timer-copy .section-kicker { color: #b6c6ad; }.timer-copy h2 { margin: 19px 0; font-size: clamp(36px, 4vw, 52px); line-height: 1.2; letter-spacing: -.05em; }
+.timer-copy > p { max-width: 350px; color: #b5c2b7; font-size: 13px; line-height: 1.9; }
+.timer-tip { display: flex; gap: 12px; margin: 26px 0 28px; padding: 15px; max-width: 370px; background: #24352a; border: 1px solid #36483a; border-radius: 5px; }
+.timer-tip > span { font-size: 21px; color: var(--green); }.timer-tip div { display: flex; flex-direction: column; gap: 5px; }.timer-tip strong { font-size: 12px; }.timer-tip small { color: #b4c0b5; line-height: 1.7; font-size: 11px; }
+.button-light { background: var(--green); color: var(--ink); }
+.timer-frame-wrap { min-width: 0; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 22px 60px #0003; }
+.frame-heading { height: 44px; display: flex; align-items: center; gap: 9px; padding: 0 15px; background: #f4f6ef; color: #61705f; font: 10px "DM Mono", Consolas, monospace; letter-spacing: .08em; }
+.frame-label { margin-left: auto; padding: 5px 7px; background: #e7ecdF; border-radius: 3px; font-size: 9px; }
+.timer-frame-wrap iframe { display: block; width: 100%; height: 480px; border: 0; background: #fff; }
+.iframe-fallback { padding: 10px 14px; color: #758071; font-size: 10px; background: #f4f6ef; }
+
+/* ---------- 关于我们 ---------- */
+.about-section { min-height: 330px; display: grid; grid-template-columns: 90px 1fr 170px; gap: 32px; align-items: center; padding-top: 75px; padding-bottom: 75px; }
+.about-mark { width: 76px; height: 76px; display: grid; place-items: center; border-radius: 20px; background: var(--green); font: 700 30px "DM Mono", Consolas, monospace; transform: rotate(-7deg); }
+.about-mark span { font-size: 12px; align-self: start; margin: 15px 0 0 -25px; }
+.about-copy h2 { font-size: 28px; }.about-copy p { max-width: 640px; color: var(--muted); font-size: 13px; line-height: 2; }
+.about-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }.about-tags span { padding: 7px 10px; border: 1px solid #dce4d6; border-radius: 3px; font-size: 10px; color: #697866; }
+/* 真实社徽展示：圆形白底卡片，图片不拉伸 */
+.club-emblem { width: 150px; height: 150px; border-radius: 50%; background: #fff; border: 1px solid var(--line); box-shadow: 0 12px 30px rgba(26,45,24,.1); display: grid; place-items: center; transform: rotate(6deg); justify-self: center; }
+.club-emblem img { width: 88%; height: 88%; object-fit: contain; }
+
+/* ---------- 招新海报区 ---------- */
+.poster-section { padding-bottom: 90px; }
+.poster-section .section-heading { margin-bottom: 26px; }
+.poster-figure { margin: 0 auto; max-width: 700px; background: #fff; border: 1px solid #e1e7dc; border-radius: 8px; padding: 14px 14px 12px; box-shadow: 0 18px 44px rgba(26,45,24,.09); }
+.poster-figure img { display: block; width: 100%; height: auto; border-radius: 4px; }
+.poster-figure figcaption { margin-top: 10px; text-align: center; font-size: 11px; color: #8a9588; }
+
+/* ---------- 页脚 ---------- */
+.site-footer { display: flex; align-items: center; gap: 25px; flex-wrap: wrap; padding: 28px clamp(24px, 6vw, 92px); border-top: 1px solid var(--line); }
+.footer-brand { display: flex; align-items: center; gap: 10px; }.footer-cube { width: 35px; height: 35px; display: grid; place-items: center; background: var(--dark); color: var(--green); border-radius: 5px; font: 700 17px "DM Mono", Consolas, monospace; }
+.footer-brand div:last-child { display: flex; flex-direction: column; gap: 4px; }.footer-brand strong { font-size: 12px; }.footer-brand span { font-size: 8px; }
+.site-footer > p { margin: 0 auto 0 0; font-size: 11px; color: #7a8778; }.site-footer > small { color: #9aa397; font-size: 10px; }
+
+/* ---------- 响应式：平板 / 大屏手机 ---------- */
+@media (max-width: 850px) {
+  .site-header { padding: 0 22px; }.hero { grid-template-columns: 1fr 0.8fr; padding-top: 65px; }.hero-art { transform: scale(.85); }
+  .timer-layout { grid-template-columns: 1fr; gap: 35px; }.timer-copy > p { max-width: 600px; }.timer-frame-wrap iframe { height: 540px; }
+  .about-section { grid-template-columns: 70px 1fr; }.club-emblem { display: none; }
+}
+/* ---------- 响应式：手机 ---------- */
+@media (max-width: 620px) {
+  .site-header { height: 72px; }.brand-logo { width: 38px; height: 38px; }.brand { gap: 8px; }.brand-text strong { font-size: 13px; }.brand-text span { font-size: 8px; }
+  .menu-toggle { display: block; color: var(--ink); cursor: pointer; }.main-nav { display: none; position: absolute; left: 0; right: 0; top: 71px; height: auto; padding: 10px 22px 18px; flex-direction: column; align-items: stretch; gap: 0; background: var(--paper); border-bottom: 1px solid var(--line); }
+  .main-nav.open { display: flex; }.nav-link { height: 42px; }.nav-link.active::after { width: 28px; right: auto; height: 2px; }
+  .section-wrap { width: calc(100% - 36px); }.hero { min-height: 0; display: flex; flex-direction: column; align-items: stretch; padding-top: 55px; }.hero-copy { padding-bottom: 0; }.hero-art { min-height: 330px; margin: 0 -12px; transform: scale(.88); }.hero-bottom { position: static; padding: 10px 0 28px; }
+  .cube-scene { width: min(280px, 88%); }
+  .floating-tag { padding: 7px 9px; font-size: 9px; }.tag-one { top: 40px; }.tag-two { bottom: 55px; }
+  h1 { font-size: 48px; }.hero-desc { font-size: 13px; }.hero-note { margin-top: 28px; }
+  .quick-stats { grid-template-columns: 1fr; padding: 8px 0; }.quick-stats > div, .quick-stats > div:first-child { padding: 15px 5px; border-right: 0; border-bottom: 1px solid var(--line); }.quick-stats > div:last-child { border-bottom: 0; }
+  .content-section { padding-top: 65px; padding-bottom: 65px; }.section-heading { align-items: start; flex-direction: column; gap: 12px; }.learning-grid { grid-template-columns: 1fr; }.learning-card { min-height: 250px; }
+  .timer-section { padding: 65px 0; }.timer-copy h2 { font-size: 42px; }.timer-frame-wrap iframe { height: 460px; }
+  .about-section { grid-template-columns: 1fr; gap: 20px; padding-top: 58px; padding-bottom: 58px; }.about-mark { width: 58px; height: 58px; border-radius: 14px; font-size: 24px; }.about-mark span { margin: 11px 0 0 -20px; font-size: 10px; }.about-copy h2 { font-size: 24px; }
+  .poster-section { padding-bottom: 65px; }.poster-figure { padding: 9px 9px 8px; }
+  .site-footer { gap: 15px; }.site-footer > p { width: 100%; order: 2; }.site-footer > small { order: 3; }
+}
+/* 尊重系统“减少动态效果”设置：关闭装饰动画（魔方自转由 JS 单独处理） */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
